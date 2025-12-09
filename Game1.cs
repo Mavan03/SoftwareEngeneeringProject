@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using SoftwareEngeneeringProject.Interfaces;
+using SoftwareEngeneeringProject.States;
 
 namespace SoftwareEngeneeringProject
 {
@@ -8,6 +10,8 @@ namespace SoftwareEngeneeringProject
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+
+        private IGameState currentState; //huidige state bewaren
 
         public Game1()
         {
@@ -28,6 +32,7 @@ namespace SoftwareEngeneeringProject
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            currentState = new MenuState(this, GraphicsDevice);
         }
 
         protected override void Update(GameTime gameTime)
@@ -36,17 +41,27 @@ namespace SoftwareEngeneeringProject
                 Exit();
 
             // TODO: Add your update logic here
-
+            if (currentState != null)
+                currentState.Update(gameTime);
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            _spriteBatch.Begin();
 
-            // TODO: Add your drawing code here
+            //teken naar huidige state
+            if (currentState != null)
+                currentState.Draw(_spriteBatch);
 
+            _spriteBatch.End();
             base.Draw(gameTime);
+
+        }
+
+        public void ChangeState(IGameState newState)
+        {
+            currentState = newState;
         }
     }
 }
