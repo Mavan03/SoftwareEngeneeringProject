@@ -10,6 +10,12 @@ namespace SoftwareEngeneeringProject.Entities
         public Vector2 Position;//public voor lezen en schrijven
         public Vector2 Velocity;//snelheid
 
+        //Physics var
+        private const float Gravity = 0.5f;
+        private const float JumpStrength = -12f;
+        private const float MoveSpeed = 5f;
+
+        private bool isGrounded;
         public Hero(Texture2D texture, Vector2 startPosition)
         {
             this.texture = texture;
@@ -20,10 +26,26 @@ namespace SoftwareEngeneeringProject.Entities
         public void Update(GameTime gameTime)
         {
             //movement
+            //zwaartekracht
+            Velocity.Y += Gravity;
             //positie aanpassen op basis van snelheid
             Position += Velocity;
 
-            Velocity = Vector2.Zero;
+            //collision temp
+            if (Position.Y >=400)
+            {
+                Position.Y = 400; // zet op de grond
+                Velocity.Y = 0; // stop met vallen
+                isGrounded = true;
+            }
+            else
+            {
+                isGrounded = false;
+            }
+
+            //reset snelheid
+            Velocity.X = 0;
+
             
         }
         public void Draw(SpriteBatch spriteBatch)
@@ -33,19 +55,23 @@ namespace SoftwareEngeneeringProject.Entities
         }
         public void MoveLeft()
         {
-            Velocity.X = -5;
+            Velocity.X = -MoveSpeed;
         }
         public void MoveRight()
         {
-            Velocity.X = 5;
+            Velocity.X = MoveSpeed;
         }
         public void Jump()
         {
-            Velocity.Y = -5;
+            if(isGrounded)
+            {
+                Velocity.Y = -MoveSpeed;
+                isGrounded = false;
+            }
         }
         public void Crouch()
         {
-            Velocity.Y = 5;
+            
         }
     }
 }
