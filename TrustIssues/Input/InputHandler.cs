@@ -10,12 +10,15 @@ namespace TrustIssues.Input
     {
         private ICommand moveLeft;
         private ICommand moveRight;
+        private ICommand jump;
+
 
         public InputHandler()
         {
             //snelheid
             moveLeft = new MoveCommand(new Vector2(-5, 0));
             moveRight = new MoveCommand(new Vector2(5, 0));
+            jump = new JumpCommand();
         }
         public void Update(Player player)
         {
@@ -28,6 +31,10 @@ namespace TrustIssues.Input
             if (state.IsKeyDown(Keys.D) || state.IsKeyDown(Keys.Right))
             {
                 moveRight.Execute(player);
+            }
+            if (state.IsKeyDown(Keys.Space) || state.IsKeyDown(Keys.Up) || state.IsKeyDown(Keys.W) || state.IsKeyDown(Keys.Z))
+            {
+                jump.Execute(player);
             }
         }
     }
