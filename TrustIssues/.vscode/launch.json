@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "C#: SoftwareEngeneeringProject Debug",
+        "name": "C#: TrustIssues Debug",
         "type": "dotnet",
         "request": "launch",
-        "projectPath": "${workspaceFolder}/SoftwareEngeneeringProject.csproj"
+        "projectPath": "${workspaceFolder}/TrustIssues.csproj"
       }
     ],
   }
