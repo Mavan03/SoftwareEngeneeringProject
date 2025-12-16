@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using System.Diagnostics;
 
 namespace TrustIssues.States
 {
@@ -20,7 +22,13 @@ namespace TrustIssues.States
 
         public override void Update(GameTime gameTime)
         {
-        
+            var keyState = Keyboard.GetState();
+
+            if (keyState.IsKeyDown(Keys.Enter)) 
+            {
+                Debug.WriteLine("ENTER IS INGEDRUKT! IK PROBEER TE WISSELEN!");
+                game.ChangeState(new GameState(game, content)); 
+            }
         }
     }
 }

@@ -39,7 +39,7 @@ namespace TrustIssues
 
         public void ChangeState(State newState)
         {
-            this.nextState = nextState;
+            nextState = newState;
         }
 
         protected override void Update(GameTime gameTime)
