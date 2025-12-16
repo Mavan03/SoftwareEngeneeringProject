@@ -15,9 +15,8 @@ namespace TrustIssues.Input
 
         public InputHandler()
         {
-            //snelheid
-            moveLeft = new MoveCommand(new Vector2(-5, 0));
-            moveRight = new MoveCommand(new Vector2(5, 0));
+            moveLeft = new MoveCommand(new Vector2(-1, 0));
+            moveRight = new MoveCommand(new Vector2(1, 0));
             jump = new JumpCommand();
         }
         public void Update(Player player)
