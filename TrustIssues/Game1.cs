@@ -66,9 +66,9 @@ namespace TrustIssues
         {
             // TODO: Add your drawing code here
 
-            _spriteBatch.Begin();
+            //_spriteBatch.Begin();
             currentState.Draw(gameTime,  _spriteBatch);
-            _spriteBatch.End();
+            //_spriteBatch.End();
 
             base.Draw(gameTime);
         }

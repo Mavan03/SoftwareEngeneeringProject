@@ -13,6 +13,9 @@ namespace TrustIssues.States
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             game.GraphicsDevice.Clear(Color.Red);
+            // spriteBatch.Begin();
+            // spriteBatch.DrawString(...);
+            // spriteBatch.End();
         }
 
         public override void LoadContent()
