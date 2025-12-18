@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using TrustIssues.Factories;
 using System.Linq;
 using TrustIssues.Observers;
+using TrustIssues.Data;
 
 namespace TrustIssues.States
 {
@@ -26,62 +27,104 @@ namespace TrustIssues.States
 
         private List<Enemy> enemies;
         private EnemyFactory enemyFactory;
+
+        //leves manager
+        private int CurrentLevelIndex = 0;
+        private Level CurrentLevel;
+        private Texture2D TileTexture;
+        private Texture2D ExitTexture;
         public override void LoadContent()
         {
-            Texture2D playerTexture = new Texture2D(game.GraphicsDevice, 1, 1);
-            playerTexture.SetData(new[] { Color.White });
-
-            Texture2D blockTExture = new Texture2D(game.GraphicsDevice, 40, 40);
-            Color[] data = new Color[40 * 40];
-            for (int i = 0; i < data.Length; ++i) data[i] = Color.White;
-            blockTExture.SetData(data);
-            
-            player = new Player(blockTExture, new Vector2(0, 250));
-            player.AddObserver(this);
-
-            InputHandler = new InputHandler();
-            
             camera = new Camera();
-
-            Texture2D tileTexture = new Texture2D(game.GraphicsDevice, 40, 40);
-            Color[] blaockData = new Color[40 * 40];
-            for (int i = 0; i < blaockData.Length; ++i) blaockData[i] = Color.Black;
-            tileTexture.SetData(data);
-
-            //de vloer
-            tiles = new List<Tile>();
-            // Maak een rij blokjes van X=0 tot X=800 op hoogte Y=300
-            for (int x = 0; x < 20; x++)
-            {
-                tiles.Add(new Tile(tileTexture, new Vector2(x * 40, 300), true));
-            }
-            tiles.Add(new Tile(tileTexture, new Vector2(0, 260), true));
-            tiles.Add(new Tile(tileTexture, new Vector2(800, 260), true));
-            // Voeg een 'zwevend' platform toe om op te springen
-            tiles.Add(new Tile(tileTexture, new Vector2(200, 200), true));
-            tiles.Add(new Tile(tileTexture, new Vector2(240, 200), true));
-
+            InputHandler = new InputHandler();
             enemyFactory = new EnemyFactory(content, game.GraphicsDevice);
-            enemies = new List<Enemy>();
-            enemies.Add(enemyFactory.CreateEnemy(EnemyType.Walker, new Vector2(300, 260)));
-            enemies.Add(enemyFactory.CreateEnemy(EnemyType.Walker, new Vector2(500, 260)));
 
+            //texture grond
+            TileTexture = new Texture2D(game.GraphicsDevice, 40, 40);
+            Color[] data = new Color[40 * 40];
+            for (int i = 0; i < data.Length; ++i) data[i] = Color.Chocolate;
+            for (int i = 0; i < data.Length; i++)
+            {
+                TileTexture.SetData(data);
+            }
+            //texture exit
+            ExitTexture = new Texture2D(game.GraphicsDevice, 40, 40);
+            Color[] exitData = new Color[40 * 40];
+            for (int i = 0; i < exitData.Length; ++i) exitData[i] = Color.Gold;
+            ExitTexture.SetData(exitData);
+            //level laden
+            LoadLevel(CurrentLevelIndex);
+
+        }
+        private void LoadLevel(int index)
+        {
+            if(index >= LevelMaps.AllLevels.Count)
+            {
+                game.ChangeState(new VictoryState(game, content));
+                return;
+            }
+            string[] mapLayout = LevelMaps.AllLevels[index];
+            CurrentLevel = new Level();
+            for (int y = 0; y < mapLayout.Length; y++)
+            {
+                string line = mapLayout[y];
+                for (int x = 0; x < line.Length; x++)
+                {
+                    char tileType = line[x];
+                    Vector2 pos = new Vector2(x * 40, y * 40);
+                    switch (tileType)
+                    {
+                        case '#': // Muur
+                            CurrentLevel.Tiles.Add(new Tile(TileTexture, pos, true));
+                            break;
+                        case 'S': // Start speler
+                            if (player == null)
+                            {
+                                // Hackje: even een witte texture maken
+                                Texture2D pTex = new Texture2D(game.GraphicsDevice, 40, 40);
+                                Color[] pData = new Color[40 * 40];
+                                for (int i = 0; i < pData.Length; i++) pData[i] = Color.White;
+                                pTex.SetData(pData);
+
+                                player = new Player(pTex, pos);
+                                player.AddObserver(this);
+                            }
+                            else
+                            {
+                                player.Position = pos;
+                            }
+                            break;
+                        case 'V': // Vijand
+                            Enemy enemy = enemyFactory.CreateEnemy(EnemyType.Walker, pos);
+                            CurrentLevel.Enemies.Add(enemy);
+                            break;
+                        case 'X': // Exit
+                            CurrentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 40, 40);
+                            break;
+                    }
+                }
+            }
         }
 
         public override void Update(GameTime gameTime)
         {
             InputHandler.Update(player);
-            player.Update(gameTime, tiles);
+            player.Update(gameTime, CurrentLevel.Tiles);
             camera.Follow(player.Position);
 
-            foreach (var enemy in enemies)
+            foreach (var enemy in CurrentLevel.Enemies)
             {
-                enemy.Update(gameTime, player, tiles);
+                enemy.Update(gameTime, player, CurrentLevel.Tiles);
 
                 if (enemy.Bounds.Intersects(player.Bounds))
                 {
                     player.Die();
                 }
+            }
+            if (player.Bounds.Intersects(CurrentLevel.ExitZone))
+            {
+                CurrentLevelIndex++;
+                LoadLevel(CurrentLevelIndex);
             }
         }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -90,11 +133,14 @@ namespace TrustIssues.States
             spriteBatch.Begin(transformMatrix: camera.Transform);
 
             //blokken
-            foreach (var tile in tiles)
+            foreach (var tile in CurrentLevel.Tiles)
             {
                 tile.Draw(spriteBatch);
             }
-            foreach (var enemy in enemies)
+
+            spriteBatch.Draw(ExitTexture, CurrentLevel.ExitZone, Color.Gold);
+
+            foreach (var enemy in CurrentLevel.Enemies)
             {
                 enemy.Draw(spriteBatch);
             }

@@ -10,6 +10,8 @@ namespace TrustIssues.Entities
         private float speed = 2f;
         private int direction = 1;
 
+        private float velocityY = 0f;
+        private float gravity = 0.5f;
         public WalkerEnemy(Texture2D texture, Vector2 startPosition)
         {
             this.texture = texture;
@@ -17,10 +19,53 @@ namespace TrustIssues.Entities
         }
         public override void Update(GameTime gameTime, Player player, List<Tile> tiles)
         {
-            Position.X += speed * direction;
+            velocityY += gravity;
+            Position.Y += velocityY;
+            bool isGrounded = false;
 
             Rectangle myRect = Bounds;
-            foreach(var tile in tiles)
+            foreach (var tile in tiles)
+            {
+                if (tile.IsSolid && myRect.Intersects(tile.Bounds))
+                {
+                    // Als we vallen (snelheid > 0) en we raken de bovenkant van een blokje
+                    if (velocityY > 0 && Position.Y < tile.Bounds.Top)
+                    {
+                        Position.Y = tile.Bounds.Top - 40; // Zet bovenop (aanname 40px hoog)
+                        velocityY = 0; // Stop met vallen
+                    }
+                    isGrounded = true;
+                }
+            }
+            if (isGrounded)
+            {
+               
+                float lookAheadX = Position.X + 20 + (25 * direction); 
+                float lookDownY = Position.Y + 45; 
+
+                Vector2 sensorSpot = new Vector2(lookAheadX, lookDownY);
+
+                bool groundDetected = false;
+
+                
+                foreach (var tile in tiles)
+                {
+                    if (tile.IsSolid && tile.Bounds.Contains(sensorSpot))
+                    {
+                        groundDetected = true;
+                        break; 
+                    }
+                }
+
+                if (!groundDetected)
+                {
+                    direction *= -1;
+                }
+            }
+            Position.X += speed * direction;
+
+            myRect = Bounds;
+            foreach (var tile in tiles)
             {
                 if (tile.IsSolid && myRect.Intersects(tile.Bounds))
                 {
@@ -35,6 +80,10 @@ namespace TrustIssues.Entities
                         Position.X += speed * direction;
                     }
                 }
+            }
+            if (Position.Y > 1000)
+            {
+                
             }
         }
     }
