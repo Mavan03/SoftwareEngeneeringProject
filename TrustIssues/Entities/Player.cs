@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
+using TrustIssues.Observers;
 
 namespace TrustIssues.Entities
 {
@@ -23,7 +24,7 @@ namespace TrustIssues.Entities
         private int height = 40; // Even hoog als het plaatje
         private int offsetX = 5; // (40 - 30) / 2 = 5 pixels opschuiven
 
-        
+        private List<IGameObserver> Observers = new List<IGameObserver>();
 
         public Rectangle Bounds
         {
@@ -134,6 +135,22 @@ namespace TrustIssues.Entities
         {
             spriteBatch.Draw(texture, Position, Color.White);
             spriteBatch.Draw(texture, Bounds, Color.Red * 0.5f);
+        }
+
+        public void AddObserver(IGameObserver observer)
+        {
+            Observers.Add(observer);
+        }
+        private void NotifyObeservers(string eventName)
+        {
+            foreach (var observer in Observers)
+            {
+                observer.OnNotify(eventName);
+            }
+        }
+        public void Die()
+        {
+            NotifyObeservers("PlayerDied");
         }
     }
 }

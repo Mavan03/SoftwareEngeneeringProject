@@ -8,10 +8,11 @@ using TrustIssues.Input;
 using System.Collections.Generic;
 using TrustIssues.Factories;
 using System.Linq;
+using TrustIssues.Observers;
 
 namespace TrustIssues.States
 {
-    public class GameState : State
+    public class GameState : State, IGameObserver
     {
         private Player player;
         private InputHandler InputHandler;
@@ -35,7 +36,9 @@ namespace TrustIssues.States
             for (int i = 0; i < data.Length; ++i) data[i] = Color.White;
             blockTExture.SetData(data);
             
-            player = new Player(blockTExture, new Vector2(100, 100));
+            player = new Player(blockTExture, new Vector2(0, 250));
+            player.AddObserver(this);
+
             InputHandler = new InputHandler();
             
             camera = new Camera();
@@ -77,7 +80,7 @@ namespace TrustIssues.States
 
                 if (enemy.Bounds.Intersects(player.Bounds))
                 {
-                    player.Position = new Vector2(100, 100);
+                    player.Die();
                 }
             }
         }
@@ -100,6 +103,14 @@ namespace TrustIssues.States
             player.Draw(spriteBatch);
 
             spriteBatch.End();
+        }
+
+        public void OnNotify(string eventName)
+        {
+            if(eventName == "PlayerDied")
+            {
+                game.ChangeState(new GameOverState(game, content));
+            }
         }
     }
 }
