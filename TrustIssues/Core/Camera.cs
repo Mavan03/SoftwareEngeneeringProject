@@ -9,8 +9,8 @@ namespace TrustIssues.Core
         public void Follow(Vector2 targetPosition)
         {
             var offset = Matrix.CreateTranslation(
-                -targetPosition.X,
-                -targetPosition.Y,
+                -targetPosition.X - (32 / 2),
+                -targetPosition.Y - (32 / 2),
                 0);
 
             var centerScreen = Matrix.CreateTranslation(

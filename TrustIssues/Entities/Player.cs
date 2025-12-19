@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using TrustIssues.Observers;
+using TrustIssues.Core;
 
 namespace TrustIssues.Entities
 {
@@ -10,7 +11,11 @@ namespace TrustIssues.Entities
     {
         public Vector2 Position;
         //txture
-        private Texture2D texture;
+        private AnimationManager animManager;
+        private Animation idleAnimation;
+        private Animation runAnimation;
+        private SpriteEffects spriteEffect;
+
         //phisics
         private Vector2 velocity;
         private const float Gravity = 0.35f;
@@ -20,9 +25,10 @@ namespace TrustIssues.Entities
         private bool _isGrounded = false;
 
         //Hitbox
-        private int width = 30;  // Smal genoeg om door gaten van 40 te vallen
-        private int height = 40; // Even hoog als het plaatje
-        private int offsetX = 5; // (40 - 30) / 2 = 5 pixels opschuiven
+        private int width = 14;  // 14-20
+        private int height = 30; 
+        private int offsetX = 9; 
+        private int offsetY = 2;
 
         private List<IGameObserver> Observers = new List<IGameObserver>();
 
@@ -32,16 +38,21 @@ namespace TrustIssues.Entities
             {
                 return new Rectangle(
                      (int)Position.X + offsetX,
-                     (int)Position.Y,
+                     (int)Position.Y + offsetY,
                      width,
                      height
                  );
             }
         }
-        public Player(Texture2D texture, Vector2 startPosition)
+        public Player(Texture2D idleText,Texture2D runTex, Vector2 startPosition)
         {
-            this.texture = texture;
             Position = startPosition;
+            idleAnimation = new Animation(idleText, 11,32, 0.1f);
+            runAnimation = new Animation(runTex, 12, 32, 0.05f);
+
+            animManager = new AnimationManager();
+            animManager.Play(idleAnimation);
+
         }
         public void Update(GameTime gameTime, List<Tile> tiles)
         {
@@ -116,7 +127,23 @@ namespace TrustIssues.Entities
 
                 }
             }
+            //bepaal welke anim
+            if(velocity.X !=0)
+            {
+                animManager.Play(runAnimation);
+            }
+            else
+            {
+                animManager.Play(idleAnimation);
+            }
+            if (velocity.X > 0)
+                spriteEffect = SpriteEffects.None;
+            else if (velocity.X < 0)
+                spriteEffect = SpriteEffects.FlipHorizontally;
+
+            animManager.Update(gameTime);
             velocity.X = 0;
+
         }
         public void Move(Vector2 direction)
         {
@@ -133,8 +160,7 @@ namespace TrustIssues.Entities
         }
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(texture, Position, Color.White);
-            spriteBatch.Draw(texture, Bounds, Color.Red * 0.5f);
+            animManager.Draw(spriteBatch, Position, spriteEffect);
         }
 
         public void AddObserver(IGameObserver observer)

@@ -33,11 +33,16 @@ namespace TrustIssues.States
         private Level CurrentLevel;
         private Texture2D TileTexture;
         private Texture2D ExitTexture;
+        private Texture2D idleTex;
+        private Texture2D runTex;
         public override void LoadContent()
         {
             camera = new Camera();
             InputHandler = new InputHandler();
             enemyFactory = new EnemyFactory(content, game.GraphicsDevice);
+
+            idleTex = content.Load<Texture2D>("Idle (32x32)"); 
+            runTex = content.Load<Texture2D>("Run (32x32)");
 
             //texture grond
             TileTexture = new Texture2D(game.GraphicsDevice, 40, 40);
@@ -81,12 +86,7 @@ namespace TrustIssues.States
                             if (player == null)
                             {
                                 // Hackje: even een witte texture maken
-                                Texture2D pTex = new Texture2D(game.GraphicsDevice, 40, 40);
-                                Color[] pData = new Color[40 * 40];
-                                for (int i = 0; i < pData.Length; i++) pData[i] = Color.White;
-                                pTex.SetData(pData);
-
-                                player = new Player(pTex, pos);
+                                player = new Player(idleTex,runTex, pos);
                                 player.AddObserver(this);
                             }
                             else
