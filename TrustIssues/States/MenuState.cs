@@ -27,9 +27,8 @@ namespace TrustIssues.States
         {
             var keyState = Keyboard.GetState();
 
-            if (keyState.IsKeyDown(Keys.Enter)) 
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
-                Debug.WriteLine("ENTER IS INGEDRUKT! IK PROBEER TE WISSELEN!");
                 game.ChangeState(new GameState(game, content)); 
             }
         }

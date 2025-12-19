@@ -25,9 +25,9 @@ namespace TrustIssues.Entities
         private bool _isGrounded = false;
 
         //Hitbox
-        private int width = 14;  // 14-20
+        private int width = 20;  // 14-20
         private int height = 30; 
-        private int offsetX = 9; 
+        private int offsetX = 6; 
         private int offsetY = 2;
 
         private List<IGameObserver> Observers = new List<IGameObserver>();
@@ -56,79 +56,79 @@ namespace TrustIssues.Entities
         }
         public void Update(GameTime gameTime, List<Tile> tiles)
         {
-            // Pas zwaartekracht toe
+            // Zwaartekracht 
             velocity.Y += Gravity;
             if (velocity.Y > MaxFallSpeed) velocity.Y = MaxFallSpeed;
 
-            // bewegen EERST X en Y tegelijk in onze positie
-            Position += velocity;
+            // X-AS BEWEGING & BOTSING
+            Position.X += velocity.X;
 
-            // halen de hitbox op van de NIEUWE positie
-            Rectangle playerRect = Bounds;
-
-            // We gaan ervan uit dat we vallen, tenzij we op een blok botsen
-            _isGrounded = false;
+            Rectangle playerRect = Bounds; // Update hitbox na X beweging
 
             foreach (var tile in tiles)
             {
-                // Alleen checken als het een muur is en we hem raken
-                if (tile.IsSolid && playerRect.Intersects(tile.Bounds))
+                // OneWay platforms negeren 
+                if (tile.IsSolid && !tile.IsOneWay && playerRect.Intersects(tile.Bounds))
                 {
-                    // BEREKEN DE OVERLAP
-                    // Rectangle.Intersect geeft ons het rechthoekje waar de twee elkaar raken
                     Rectangle overlap = Rectangle.Intersect(playerRect, tile.Bounds);
-                                   
-                    // Als de overlap smaller is dan dat hij hoog is...
-                    // Dan raken we waarschijnlijk de ZIJKANT (Muur)
-                    if (overlap.Width < overlap.Height)
-                    {
-                        // We duwen de speler horizontaal weg
 
-                        // Komen we van links? (Speler center zit links van tegel center)
-                        if (playerRect.Center.X < tile.Bounds.Center.X)
-                        {
-                            // Duw naar links
-                            Position.X -= overlap.Width;
-                        }
-                        else
-                        {
-                            // Duw naar rechts
-                            Position.X += overlap.Width;
-                        }
-
-                        // Stop X snelheid (zodat je niet blijft glijden)
-                        velocity.X = 0;
-                    }
-                    // Anders is de overlap breder dan hoog...
-                    // Dan raken we de VLOER of het PLAFOND
+                    // Simpele X botsing resolutie
+                    if (playerRect.Center.X < tile.Bounds.Center.X)
+                        Position.X -= overlap.Width; // Duw naar links
                     else
+                        Position.X += overlap.Width; // Duw naar rechts
+
+                    velocity.X = 0;
+                    playerRect = Bounds; // Update bounds direct!
+                }
+            }
+
+            //Y-AS BEWEGING & BOTSING
+            Position.Y += velocity.Y;
+
+            playerRect = Bounds; // Update hitbox na Y beweging
+            _isGrounded = false; // Reset grounded status
+
+            foreach (var tile in tiles)
+            {
+                if (playerRect.Intersects(tile.Bounds))
+                {
+                    // HARDE MUUR (Solid & !OneWay) 
+                    if (tile.IsSolid && !tile.IsOneWay)
                     {
-                        // Komen we van boven? (Speler center zit boven tegel center)
-                        if (playerRect.Center.Y < tile.Bounds.Center.Y)
+                        Rectangle overlap = Rectangle.Intersect(playerRect, tile.Bounds);
+
+                        if (velocity.Y > 0) // Landen
                         {
-                            // We landen bovenop (Vloer)
                             Position.Y -= overlap.Height;
                             velocity.Y = 0;
                             _isGrounded = true;
                         }
-                        else
+                        else if (velocity.Y < 0) // Hoofd stoten
                         {
-                            // We stoten ons hoofd (Plafond)
                             Position.Y += overlap.Height;
-
-                            // Laat de speler direct weer vallen (geen 0, anders plak je)
-                            velocity.Y = 0.5f;
+                            velocity.Y = 0.5f; // Klein tikje terug
                         }
+                        playerRect = Bounds;
                     }
 
-                    // Update de playerRect direct voor de volgende check in de loop!
-                    // Dit lost het "Naad" probleem op.
-                    playerRect = Bounds;
+                    //ONE-WAY PLATFORM
+                    else if (tile.IsOneWay)
+                    {
 
+                        if (velocity.Y > 0 &&
+                            playerRect.Bottom <= tile.Bounds.Bottom &&
+                            (playerRect.Bottom - velocity.Y) <= tile.Bounds.Top + 5)
+                        {
+                            // Landen op platform
+                            Position.Y = tile.Bounds.Top - height - offsetY; // Zet precies bovenop
+                            velocity.Y = 0;
+                            _isGrounded = true;
+                        }
+                    }
                 }
             }
-            //bepaal welke anim
-            if(velocity.X !=0)
+            if (velocity.X != 0)
             {
                 animManager.Play(runAnimation);
             }
@@ -136,14 +136,14 @@ namespace TrustIssues.Entities
             {
                 animManager.Play(idleAnimation);
             }
+
             if (velocity.X > 0)
                 spriteEffect = SpriteEffects.None;
             else if (velocity.X < 0)
                 spriteEffect = SpriteEffects.FlipHorizontally;
 
             animManager.Update(gameTime);
-            velocity.X = 0;
-
+            velocity.X = 0; // Reset input velocity
         }
         public void Move(Vector2 direction)
         {

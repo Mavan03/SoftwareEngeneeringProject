@@ -1,34 +1,30 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System.Runtime.InteropServices;
 namespace TrustIssues.Entities
 {
     public class Tile
     {
-        public Texture2D Texture { get; private set; }
         public Vector2 Position { get; private set; }
+        public bool IsSolid { get; private set; }
+        public bool IsOneWay { get; private set; } 
+        public Point GridPosition { get; private set; }
 
+        public Tile(Vector2 position, bool isSolid, bool isOneWay, Point gridPos)
+        {
+            Position = position;
+            IsSolid = isSolid;
+            IsOneWay = isOneWay;
+            GridPosition = gridPos;
+        }
         //hitbox
         public Rectangle Bounds
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, 40, 40);
+                if (IsOneWay)
+                    return new Rectangle((int)Position.X, (int)Position.Y, 32, 8);
+                return new Rectangle((int)Position.X, (int)Position.Y, 32, 32);
             }
         }
-        //check voor solid van blok
-        public bool IsSolid { get; set; } = true;
-
-        public Tile(Texture2D texture, Vector2 position, bool isSolid)
-        {
-            Texture = texture;
-            Position = position;
-            IsSolid = isSolid;
-        }
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            spriteBatch.Draw(Texture, Position, Color.White);
-        }
-
     }
 }

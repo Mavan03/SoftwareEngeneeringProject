@@ -32,10 +32,7 @@ namespace TrustIssues.Factories
             for (int i = 0; i < dataChaser.Length; i++) dataChaser[i] = Color.Purple;
             chaserTexture.SetData(dataChaser);
 
-            trapTexture = new Texture2D(graphicsDevice, 32, 32);
-            Color[] dataTrap = new Color[32 * 32];
-            for (int i = 0; i < dataTrap.Length; i++) dataTrap[i] = Color.Gray;
-            trapTexture.SetData(dataTrap);
+            trapTexture = content.Load<Texture2D>("Idle");
         }
 
         public Enemy CreateEnemy(EnemyType type, Vector2 position)

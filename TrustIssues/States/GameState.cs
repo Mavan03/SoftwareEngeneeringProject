@@ -15,6 +15,8 @@ namespace TrustIssues.States
 {
     public class GameState : State, IGameObserver
     {
+        private Texture2D backgroundTexture;
+
         private Player player;
         private InputHandler InputHandler;
         private Camera camera;
@@ -31,7 +33,7 @@ namespace TrustIssues.States
         //leves manager
         private int CurrentLevelIndex = 0;
         private Level CurrentLevel;
-        private Texture2D TileTexture;
+        private TileManager TileManager;
         private Texture2D ExitTexture;
         private Texture2D idleTex;
         private Texture2D runTex;
@@ -44,14 +46,11 @@ namespace TrustIssues.States
             idleTex = content.Load<Texture2D>("Idle (32x32)"); 
             runTex = content.Load<Texture2D>("Run (32x32)");
 
-            //texture grond
-            TileTexture = new Texture2D(game.GraphicsDevice, 40, 40);
-            Color[] data = new Color[40 * 40];
-            for (int i = 0; i < data.Length; ++i) data[i] = Color.Chocolate;
-            for (int i = 0; i < data.Length; i++)
-            {
-                TileTexture.SetData(data);
-            }
+            Texture2D terrainTex = content.Load<Texture2D>("Terrain (16x16)");
+            TileManager = new TileManager(terrainTex, 16, 32);
+
+            backgroundTexture = content.Load<Texture2D>("Blue"); // Of "Green"
+
             //texture exit
             ExitTexture = new Texture2D(game.GraphicsDevice, 40, 40);
             Color[] exitData = new Color[40 * 40];
@@ -76,11 +75,14 @@ namespace TrustIssues.States
                 for (int x = 0; x < line.Length; x++)
                 {
                     char tileType = line[x];
-                    Vector2 pos = new Vector2(x * 40, y * 40);
+                    Vector2 pos = new Vector2(x * 32, y * 32);
                     switch (tileType)
                     {
                         case '#': // Muur
-                            CurrentLevel.Tiles.Add(new Tile(TileTexture, pos, true));
+                            CurrentLevel.Tiles.Add(new Tile(pos,true,false,new Point(x,y)));
+                            break;
+                        case '-': // Platform (Solid = false*, OneWay = true)
+                            CurrentLevel.Tiles.Add(new Tile(pos, false, true, new Point(x, y)));
                             break;
                         case 'S': // Start speler
                             if (player == null)
@@ -107,7 +109,7 @@ namespace TrustIssues.States
                             CurrentLevel.Enemies.Add(trap);
                             break;
                         case 'X': // Exit
-                            CurrentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 40, 40);
+                            CurrentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 32, 32);
                             break;
                     }
                 }
@@ -137,13 +139,26 @@ namespace TrustIssues.States
         }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            game.GraphicsDevice.Clear(Color.ForestGreen);
-            spriteBatch.Begin(transformMatrix: camera.Transform);
 
-            //blokken
-            foreach (var tile in CurrentLevel.Tiles)
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            int screenWidth = game.GraphicsDevice.Viewport.Width;
+            int screenHeight = game.GraphicsDevice.Viewport.Height;
+
+            for (int x = 0; x < screenWidth; x += 64)
             {
-                tile.Draw(spriteBatch);
+                for (int y = 0; y < screenHeight; y += 64)
+                {
+                    spriteBatch.Draw(backgroundTexture, new Vector2(x, y), Color.White);
+                }
+            }
+            spriteBatch.End();
+
+            spriteBatch.Begin(transformMatrix: camera.Transform, samplerState: SamplerState.PointClamp);
+            //blokken
+            if (CurrentLevel != null)
+            {
+                TileManager.DrawTiles(spriteBatch, CurrentLevel.Tiles);
+                // ... rest van je draw code
             }
 
             spriteBatch.Draw(ExitTexture, CurrentLevel.ExitZone, Color.Gold);
