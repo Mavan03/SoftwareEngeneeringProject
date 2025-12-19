@@ -98,6 +98,14 @@ namespace TrustIssues.States
                             Enemy enemy = enemyFactory.CreateEnemy(EnemyType.Walker, pos);
                             CurrentLevel.Enemies.Add(enemy);
                             break;
+                        case 'B': // Bat 
+                            Enemy bat = enemyFactory.CreateEnemy(EnemyType.Chaser, pos);
+                            CurrentLevel.Enemies.Add(bat);
+                            break;
+                        case 'T': // Trap
+                            Enemy trap = enemyFactory.CreateEnemy(EnemyType.Trap, pos);
+                            CurrentLevel.Enemies.Add(trap);
+                            break;
                         case 'X': // Exit
                             CurrentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 40, 40);
                             break;
