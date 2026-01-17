@@ -23,16 +23,20 @@ namespace TrustIssues.States
         private Camera camera;
 
         private List<Tile> tiles;
+        private int CurrentLevelIndex = 0;
         public GameState(Game1 game, ContentManager content) : base(game, content)
         {
-
+            CurrentLevelIndex = 0;
+        }
+        public GameState(Game1 game, ContentManager content, int startLevel) : base(game, content)
+        {
+            CurrentLevelIndex = startLevel;
         }
 
         private List<Enemy> enemies;
         private EnemyFactory enemyFactory;
 
         //leves manager
-        private int CurrentLevelIndex = 0;
         private Level CurrentLevel;
         private TileManager TileManager;
         private Texture2D _endTexture;
@@ -182,7 +186,7 @@ namespace TrustIssues.States
         {
             if(eventName == "PlayerDied")
             {
-                game.ChangeState(new GameOverState(game, content));
+                game.ChangeState(new GameOverState(game, content, CurrentLevelIndex));
             }
         }
     }
