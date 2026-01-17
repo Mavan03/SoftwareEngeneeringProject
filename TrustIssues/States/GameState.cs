@@ -17,6 +17,7 @@ namespace TrustIssues.States
     {
         private Texture2D backgroundTexture;
 
+
         private Player player;
         private InputHandler InputHandler;
         private Camera camera;
@@ -34,9 +35,11 @@ namespace TrustIssues.States
         private int CurrentLevelIndex = 0;
         private Level CurrentLevel;
         private TileManager TileManager;
-        private Texture2D ExitTexture;
+        private Texture2D _endTexture;
         private Texture2D idleTex;
         private Texture2D runTex;
+        private Texture2D jumpTex;
+        private Texture2D falTex;
         public override void LoadContent()
         {
             camera = new Camera();
@@ -45,6 +48,9 @@ namespace TrustIssues.States
 
             idleTex = content.Load<Texture2D>("Idle (32x32)"); 
             runTex = content.Load<Texture2D>("Run (32x32)");
+            jumpTex = content.Load<Texture2D>("Jump (32x32)");
+            falTex = content.Load<Texture2D>("Fall (32x32)");
+
 
             Texture2D terrainTex = content.Load<Texture2D>("Terrain (16x16)");
             TileManager = new TileManager(terrainTex, 16, 32);
@@ -52,10 +58,7 @@ namespace TrustIssues.States
             backgroundTexture = content.Load<Texture2D>("Blue"); // Of "Green"
 
             //texture exit
-            ExitTexture = new Texture2D(game.GraphicsDevice, 40, 40);
-            Color[] exitData = new Color[40 * 40];
-            for (int i = 0; i < exitData.Length; ++i) exitData[i] = Color.Gold;
-            ExitTexture.SetData(exitData);
+            _endTexture = content.Load<Texture2D>("End (Idle)");
             //level laden
             LoadLevel(CurrentLevelIndex);
 
@@ -87,8 +90,7 @@ namespace TrustIssues.States
                         case 'S': // Start speler
                             if (player == null)
                             {
-                                // Hackje: even een witte texture maken
-                                player = new Player(idleTex,runTex, pos);
+                                player = new Player(idleTex,runTex,jumpTex,falTex, pos);
                                 player.AddObserver(this);
                             }
                             else
@@ -161,8 +163,10 @@ namespace TrustIssues.States
                 // ... rest van je draw code
             }
 
-            spriteBatch.Draw(ExitTexture, CurrentLevel.ExitZone, Color.Gold);
+            Rectangle exitRect = CurrentLevel.ExitZone;
+            Vector2 trophyPos = new Vector2(exitRect.X - 16, exitRect.Y - 32);
 
+            spriteBatch.Draw(_endTexture, trophyPos, new Rectangle(0, 0, 64, 64), Color.White);
             foreach (var enemy in CurrentLevel.Enemies)
             {
                 enemy.Draw(spriteBatch);

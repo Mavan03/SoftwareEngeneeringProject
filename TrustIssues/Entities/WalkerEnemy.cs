@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using TrustIssues.Core;
 
 namespace TrustIssues.Entities
 {
@@ -14,10 +15,16 @@ namespace TrustIssues.Entities
 
         private int height = 32;
 
+        //animatie
+        private AnimationManager _animManager;
+        private SpriteEffects _spriteEffect;
+
         public WalkerEnemy(Texture2D texture, Vector2 startPosition)
         {
-            this.texture = texture;
             Position = startPosition;
+            var runAnim = new Animation(texture, 16, 32, 0.05f);
+            _animManager = new AnimationManager();
+            _animManager.Play(runAnim);
         }
 
         public override void Update(GameTime gameTime, Player player, List<Tile> tiles)
@@ -85,6 +92,17 @@ namespace TrustIssues.Entities
                     }
                 }
             }
+            // Update de animatie timer
+            _animManager.Update(gameTime);
+
+            // Spiegel de sprite op basis van richting
+            if (direction > 0) _spriteEffect = SpriteEffects.FlipHorizontally; 
+            else _spriteEffect = SpriteEffects.None;
+        }
+        public override void Draw(SpriteBatch spriteBatch)
+        {
+            _animManager.Draw(spriteBatch, Position, _spriteEffect);
         }
     }
+    
 }

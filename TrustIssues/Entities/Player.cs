@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
 using TrustIssues.Observers;
 using TrustIssues.Core;
 
@@ -10,24 +9,27 @@ namespace TrustIssues.Entities
     public class Player
     {
         public Vector2 Position;
-        //txture
+
+        // Texture & Animatie
         private AnimationManager animManager;
         private Animation idleAnimation;
         private Animation runAnimation;
+        private Animation jumpAnimation;
+        private Animation fallAnimation;
         private SpriteEffects spriteEffect;
 
-        //phisics
+        // Physics
         private Vector2 velocity;
         private const float Gravity = 0.35f;
-        private const float JumpStrength=-9f;
+        private const float JumpStrength = -9f;
         private const float MaxFallSpeed = 10f;
-        private const float MoveSpeed = 5f; 
+        private const float MoveSpeed = 5f;
         private bool _isGrounded = false;
 
-        //Hitbox
-        private int width = 20;  // 14-20
-        private int height = 30; 
-        private int offsetX = 6; 
+        // Hitbox
+        private int width = 20;
+        private int height = 30;
+        private int offsetX = 6;
         private int offsetY = 2;
 
         private List<IGameObserver> Observers = new List<IGameObserver>();
@@ -44,129 +46,153 @@ namespace TrustIssues.Entities
                  );
             }
         }
-        public Player(Texture2D idleText,Texture2D runTex, Vector2 startPosition)
+
+        public Player(Texture2D idleText, Texture2D runTex, Texture2D jumpTex, Texture2D fallTex, Vector2 startPosition)
         {
             Position = startPosition;
-            idleAnimation = new Animation(idleText, 11,32, 0.1f);
+            // Zorg dat FrameWidth 32 is (voor je 32x32 tileset)
+            idleAnimation = new Animation(idleText, 11, 32, 0.1f);
             runAnimation = new Animation(runTex, 12, 32, 0.05f);
+            jumpAnimation = new Animation(jumpTex, 1, 32, 0.1f);
+            fallAnimation = new Animation(fallTex, 1, 32, 0.1f);
 
             animManager = new AnimationManager();
             animManager.Play(idleAnimation);
-
         }
+
         public void Update(GameTime gameTime, List<Tile> tiles)
         {
-            // Zwaartekracht 
+            // 1. Zwaartekracht toepassen
             velocity.Y += Gravity;
             if (velocity.Y > MaxFallSpeed) velocity.Y = MaxFallSpeed;
 
-            // X-AS BEWEGING & BOTSING
+            // ==========================================================
+            // STAP 1: X-AS BEWEGING
+            // ==========================================================
             Position.X += velocity.X;
-
-            Rectangle playerRect = Bounds; // Update hitbox na X beweging
+            Rectangle playerRect = Bounds;
 
             foreach (var tile in tiles)
             {
-                // OneWay platforms negeren 
                 if (tile.IsSolid && !tile.IsOneWay && playerRect.Intersects(tile.Bounds))
                 {
-                    Rectangle overlap = Rectangle.Intersect(playerRect, tile.Bounds);
-
-                    // Simpele X botsing resolutie
-                    if (playerRect.Center.X < tile.Bounds.Center.X)
-                        Position.X -= overlap.Width; // Duw naar links
-                    else
-                        Position.X += overlap.Width; // Duw naar rechts
+                    if (velocity.X > 0) Position.X = tile.Bounds.Left - width - offsetX;
+                    else if (velocity.X < 0) Position.X = tile.Bounds.Right - offsetX;
 
                     velocity.X = 0;
-                    playerRect = Bounds; // Update bounds direct!
+                    playerRect = Bounds;
                 }
             }
 
-            //Y-AS BEWEGING & BOTSING
+            // ==========================================================
+            // STAP 2: Y-AS BEWEGING
+            // ==========================================================
             Position.Y += velocity.Y;
+            playerRect = Bounds;
 
-            playerRect = Bounds; // Update hitbox na Y beweging
-            _isGrounded = false; // Reset grounded status
+            // We resetten _isGrounded, maar onthouden even of we vorige keer grounded waren
+            bool wasGrounded = _isGrounded;
+            _isGrounded = false;
 
             foreach (var tile in tiles)
             {
                 if (playerRect.Intersects(tile.Bounds))
                 {
-                    // HARDE MUUR (Solid & !OneWay) 
+                    // HARDE MUUR
                     if (tile.IsSolid && !tile.IsOneWay)
                     {
-                        Rectangle overlap = Rectangle.Intersect(playerRect, tile.Bounds);
-
                         if (velocity.Y > 0) // Landen
                         {
-                            Position.Y -= overlap.Height;
+                            // HARD AFRONDEN NAAR HELE PIXELS
+                            // Dit voorkomt dat je op bijv 300.35 blijft hangen
+                            Position.Y = (int)(tile.Bounds.Top - height - offsetY);
+
                             velocity.Y = 0;
                             _isGrounded = true;
                         }
                         else if (velocity.Y < 0) // Hoofd stoten
                         {
-                            Position.Y += overlap.Height;
-                            velocity.Y = 0.5f; // Klein tikje terug
+                            Position.Y = (int)(tile.Bounds.Bottom - offsetY);
+                            velocity.Y = 0;
                         }
-                        playerRect = Bounds;
                     }
-
-                    //ONE-WAY PLATFORM
+                    // ONE-WAY PLATFORM
                     else if (tile.IsOneWay)
                     {
-
                         if (velocity.Y > 0 &&
                             playerRect.Bottom <= tile.Bounds.Bottom &&
                             (playerRect.Bottom - velocity.Y) <= tile.Bounds.Top + 5)
                         {
-                            // Landen op platform
-                            Position.Y = tile.Bounds.Top - height - offsetY; // Zet precies bovenop
+                            Position.Y = (int)(tile.Bounds.Top - height - offsetY);
                             velocity.Y = 0;
                             _isGrounded = true;
                         }
                     }
                 }
             }
-            if (velocity.X != 0)
+
+            // ==========================================================
+            // ANIMATIE SELECTIE
+            // ==========================================================
+
+            // 1. Springen (Negatieve Y)
+            if (velocity.Y < 0)
+            {
+                animManager.Play(jumpAnimation);
+            }
+            // 2. Vallen
+            // HIER IS DE TRUC: Verander > 0 naar > 0.8f (of iets groter dan je Gravity 0.35)
+            // Hierdoor negeert hij die kleine "tril-beweging" van de zwaartekracht.
+            else if (velocity.Y > 0.8f && !_isGrounded)
+            {
+                animManager.Play(fallAnimation);
+            }
+            // 3. Rennen
+            else if (velocity.X != 0)
             {
                 animManager.Play(runAnimation);
             }
+            // 4. Stilstaan
             else
             {
                 animManager.Play(idleAnimation);
             }
 
-            if (velocity.X > 0)
-                spriteEffect = SpriteEffects.None;
-            else if (velocity.X < 0)
-                spriteEffect = SpriteEffects.FlipHorizontally;
+            // Spiegelen
+            if (velocity.X > 0) spriteEffect = SpriteEffects.None;
+            else if (velocity.X < 0) spriteEffect = SpriteEffects.FlipHorizontally;
 
             animManager.Update(gameTime);
-            velocity.X = 0; // Reset input velocity
+            velocity.X = 0; // Reset input voor volgende frame
         }
+
         public void Move(Vector2 direction)
         {
             if (direction.X != 0)
                 velocity.X = direction.X > 0 ? MoveSpeed : -MoveSpeed;
         }
+
         public void Jump()
         {
-            if(_isGrounded)
+            if (_isGrounded)
             {
                 velocity.Y = JumpStrength;
                 _isGrounded = false;
             }
         }
+
         public void Draw(SpriteBatch spriteBatch)
-        {
-            animManager.Draw(spriteBatch, Position, spriteEffect);
+        {    
+            Vector2 drawPos = new Vector2((int)Position.X, (int)Position.Y);
+
+            animManager.Draw(spriteBatch, drawPos, spriteEffect);
         }
 
         public void AddObserver(IGameObserver observer)
         {
             Observers.Add(observer);
         }
+
         private void NotifyObeservers(string eventName)
         {
             foreach (var observer in Observers)
@@ -174,6 +200,7 @@ namespace TrustIssues.Entities
                 observer.OnNotify(eventName);
             }
         }
+
         public void Die()
         {
             NotifyObeservers("PlayerDied");

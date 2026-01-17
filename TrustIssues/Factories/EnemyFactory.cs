@@ -21,17 +21,8 @@ namespace TrustIssues.Factories
 
         public EnemyFactory(ContentManager content, GraphicsDevice graphicsDevice)
         {
-            this.content = content;
-            walkerTexture = new Texture2D(graphicsDevice, 32, 32);
-            Color[] dataWalker = new Color[32 * 32];
-            for (int i = 0; i < dataWalker.Length; i++) dataWalker[i] = Color.Red;
-            walkerTexture.SetData(dataWalker);
-
-            chaserTexture = new Texture2D(graphicsDevice, 32, 32);
-            Color[] dataChaser = new Color[32 * 32];
-            for (int i = 0; i < dataChaser.Length; i++) dataChaser[i] = Color.Purple;
-            chaserTexture.SetData(dataChaser);
-
+            walkerTexture = content.Load<Texture2D>("Enemy/Run (32x32)");
+            chaserTexture = content.Load<Texture2D>("Flying (46x30)");
             trapTexture = content.Load<Texture2D>("Idle");
         }
 
