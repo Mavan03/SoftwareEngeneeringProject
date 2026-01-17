@@ -50,13 +50,13 @@ namespace TrustIssues.Data
             {
                 "#######################################",
                 "#                                     #", // Einde is linksboven...
-                "#X                                    #",
-                "#####          B          B           #",
+                "#                                     #",
+                "#X             B          B           #",
+                "#####                                 #",
                 "#         ---       ---       ---     #",
                 "#                                     #",
-                "#                                     #",
                 "#               V         V           #",
-                "#     #####   #####     #####   ####  #", // ...maar je moet via rechts
+                "#     #####   #####     #####   ###   #", // ...maar je moet via rechts
                 "#  --                                -#",
                 "#       -    -     -     -     -      #",
                 "#       T     T     T     T     T     #", // Pas op voor de spikes beneden!
