@@ -9,11 +9,9 @@ namespace TrustIssues
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private State _currentState;
+        private State _nextState;
 
-        //huidige scherm
-        private State currentState;
-        //volgende scherm
-        private State nextState;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -23,53 +21,42 @@ namespace TrustIssues
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
-            currentState = new MenuState(this, Content);
-            currentState.LoadContent();
+            _currentState = new MenuState(this, Content);
+            _currentState.LoadContent();
         }
 
         public void ChangeState(State newState)
         {
-            nextState = newState;
+            _nextState = newState;
         }
 
         protected override void Update(GameTime gameTime)
         {
-
-            // TODO: Add your update logic here
-            if(nextState != null)
+            // State wisselen
+            if (_nextState != null)
             {
-                currentState = nextState;
-                currentState.LoadContent();
-                nextState = null;
+                _currentState = _nextState;
+                _currentState.LoadContent();
+                _nextState = null;
             }
 
-            currentState.Update(gameTime);
+            _currentState.Update(gameTime);
 
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
 
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            // TODO: Add your drawing code here
-
-            //_spriteBatch.Begin();
-            currentState.Draw(gameTime,  _spriteBatch);
-            //_spriteBatch.End();
-
+            _currentState.Draw(gameTime, _spriteBatch);
             base.Draw(gameTime);
         }
     }

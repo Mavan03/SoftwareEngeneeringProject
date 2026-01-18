@@ -1,13 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using System.Xml.Linq;
+using System.Collections.Generic;
 using TrustIssues.Core;
 using TrustIssues.Entities;
-using TrustIssues.Input;
-using System.Collections.Generic;
 using TrustIssues.Factories;
-using System.Linq;
+using TrustIssues.Input;
 using TrustIssues.Observers;
 using TrustIssues.Data;
 
@@ -15,67 +13,55 @@ namespace TrustIssues.States
 {
     public class GameState : State, IGameObserver
     {
-        private Texture2D backgroundTexture;
-
-
-        private Player player;
-        private InputHandler InputHandler;
-        private Camera camera;
-
-        private List<Tile> tiles;
-        private int CurrentLevelIndex = 0;
-        public GameState(Game1 game, ContentManager content) : base(game, content)
-        {
-            CurrentLevelIndex = 0;
-        }
-        public GameState(Game1 game, ContentManager content, int startLevel) : base(game, content)
-        {
-            CurrentLevelIndex = startLevel;
-        }
-
-        private List<Enemy> enemies;
-        private EnemyFactory enemyFactory;
-
-        //leves manager
-        private Level CurrentLevel;
-        private TileManager TileManager;
+        private Texture2D _backgroundTexture;
         private Texture2D _endTexture;
-        private Texture2D idleTex;
-        private Texture2D runTex;
-        private Texture2D jumpTex;
-        private Texture2D falTex;
+        private Player _player;
+        private InputHandler _inputHandler;
+        private Camera _camera;
+        private EnemyFactory _enemyFactory;
+        private Level _currentLevel;
+        private TileManager _tileManager;
+        private int _currentLevelIndex;
+
+        // Textures voor speler (cache)
+        private Texture2D _idleTex, _runTex, _jumpTex, _fallTex;
+
+        public GameState(Game1 game, ContentManager content, int startLevel = 0) : base(game, content)
+        {
+            _currentLevelIndex = startLevel;
+        }
+
         public override void LoadContent()
         {
-            camera = new Camera();
-            InputHandler = new InputHandler();
-            enemyFactory = new EnemyFactory(content, game.GraphicsDevice);
+            _camera = new Camera();
+            _inputHandler = new InputHandler();
+            _enemyFactory = new EnemyFactory(content, game.GraphicsDevice);
 
-            idleTex = content.Load<Texture2D>("Idle (32x32)"); 
-            runTex = content.Load<Texture2D>("Run (32x32)");
-            jumpTex = content.Load<Texture2D>("Jump (32x32)");
-            falTex = content.Load<Texture2D>("Fall (32x32)");
-
+            _idleTex = content.Load<Texture2D>("Idle (32x32)");
+            _runTex = content.Load<Texture2D>("Run (32x32)");
+            _jumpTex = content.Load<Texture2D>("Jump (32x32)");
+            _fallTex = content.Load<Texture2D>("Fall (32x32)");
 
             Texture2D terrainTex = content.Load<Texture2D>("Terrain (16x16)");
-            TileManager = new TileManager(terrainTex, 16, 32);
+            _tileManager = new TileManager(terrainTex, 16, 32);
 
-            backgroundTexture = content.Load<Texture2D>("Blue"); // Of "Green"
-
-            //texture exit
+            _backgroundTexture = content.Load<Texture2D>("Blue");
             _endTexture = content.Load<Texture2D>("End (Idle)");
-            //level laden
-            LoadLevel(CurrentLevelIndex);
 
+            LoadLevel(_currentLevelIndex);
         }
+
         private void LoadLevel(int index)
         {
-            if(index >= LevelMaps.AllLevels.Count)
+            if (index >= LevelMaps.AllLevels.Count)
             {
                 game.ChangeState(new VictoryState(game, content));
                 return;
             }
+
             string[] mapLayout = LevelMaps.AllLevels[index];
-            CurrentLevel = new Level();
+            _currentLevel = new Level();
+
             for (int y = 0; y < mapLayout.Length; y++)
             {
                 string line = mapLayout[y];
@@ -83,40 +69,34 @@ namespace TrustIssues.States
                 {
                     char tileType = line[x];
                     Vector2 pos = new Vector2(x * 32, y * 32);
+
                     switch (tileType)
                     {
-                        case '#': // Muur
-                            CurrentLevel.Tiles.Add(new Tile(pos,true,false,new Point(x,y)));
-                            break;
-                        case '-': // Platform (Solid = false*, OneWay = true)
-                            CurrentLevel.Tiles.Add(new Tile(pos, false, true, new Point(x, y)));
-                            break;
-                        case 'S': // Start speler
-                            if (player == null)
+                        case '#': _currentLevel.Tiles.Add(new Tile(pos, true, false, new Point(x, y))); break;
+                        case '-': _currentLevel.Tiles.Add(new Tile(pos, false, true, new Point(x, y))); break;
+                        case 'S':
+                            if (_player == null)
                             {
-                                player = new Player(idleTex,runTex,jumpTex,falTex, pos);
-                                player.AddObserver(this);
+                                _player = new Player(_idleTex, _runTex, _jumpTex, _fallTex, pos);
+                                _player.AddObserver(this);
                             }
                             else
                             {
-                                player.Position = pos;
+                                _player.Position = pos;
                             }
                             break;
-                        case 'V': // Vijand
-                            Enemy enemy = enemyFactory.CreateEnemy(EnemyType.Walker, pos);
-                            CurrentLevel.Enemies.Add(enemy);
+                        case 'I':
+                            var invisTile = new Tile(pos, true, false, new Point(x, y));
+                            invisTile.IsVisible = false;
+                            _currentLevel.Tiles.Add(invisTile);
                             break;
-                        case 'B': // Bat 
-                            Enemy bat = enemyFactory.CreateEnemy(EnemyType.Chaser, pos);
-                            CurrentLevel.Enemies.Add(bat);
+                        case 'F':
+                            _currentLevel.Tiles.Add(new Tile(pos, false, false, new Point(x, y)));
                             break;
-                        case 'T': // Trap
-                            Enemy trap = enemyFactory.CreateEnemy(EnemyType.Trap, pos);
-                            CurrentLevel.Enemies.Add(trap);
-                            break;
-                        case 'X': // Exit
-                            CurrentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 32, 32);
-                            break;
+                        case 'V': _currentLevel.Enemies.Add(_enemyFactory.CreateEnemy(EnemyType.Walker, pos)); break;
+                        case 'B': _currentLevel.Enemies.Add(_enemyFactory.CreateEnemy(EnemyType.Chaser, pos)); break;
+                        case 'T': _currentLevel.Enemies.Add(_enemyFactory.CreateEnemy(EnemyType.Trap, pos)); break;
+                        case 'X': _currentLevel.ExitZone = new Rectangle((int)pos.X, (int)pos.Y, 32, 32); break;
                     }
                 }
             }
@@ -124,99 +104,69 @@ namespace TrustIssues.States
 
         public override void Update(GameTime gameTime)
         {
-            InputHandler.Update(player);
-            player.Update(gameTime, CurrentLevel.Tiles);
-            camera.Follow(player.Position);
+            _inputHandler.Update(_player);
+            _player.Update(gameTime, _currentLevel.Tiles);
+            _camera.Follow(_player.Position);
 
-            for (int i = CurrentLevel.Enemies.Count - 1; i >= 0; i--)
+            for (int i = _currentLevel.Enemies.Count - 1; i >= 0; i--)
             {
-                Enemy enemy = CurrentLevel.Enemies[i];
+                var enemy = _currentLevel.Enemies[i];
+                enemy.Update(gameTime, _player, _currentLevel.Tiles);
 
-                // 1. Eerst updaten
-                enemy.Update(gameTime, player, CurrentLevel.Tiles);
-
-                // 2. Als hij 'Expired' is (animatie klaar), verwijder hem definitief
                 if (enemy.IsExpired)
                 {
-                    CurrentLevel.Enemies.RemoveAt(i);
+                    _currentLevel.Enemies.RemoveAt(i);
                     continue;
                 }
 
-                // 3. Botsing checken (Alleen als vijand nog leeft en speler leeft)
-                if (!enemy.IsDead && player.Bounds.Intersects(enemy.Bounds))
+                if (!enemy.IsDead && _player.Bounds.Intersects(enemy.Bounds))
                 {
-                    // LOGICA: SPRONG OP HOOFD?
-                    // Voorwaarden:
-                    // A. Speler valt naar beneden (Velocity.Y > 0)
-                    // B. Speler zit fysiek boven de vijand (Bottom < Center van vijand)
-
-                    Rectangle enemyRect = enemy.Bounds;
-
-                    if (player.Velocity.Y > 0 && player.Bounds.Bottom < enemyRect.Center.Y && enemy.IsStompable) // <--- HIER IS DE FIX
+                    if (_player.Velocity.Y > 0 && _player.Bounds.Bottom < enemy.Bounds.Center.Y && enemy.IsStompable)
                     {
-                        // PLET DE VIJAND
                         enemy.Die();
-                        player.Bounce();
+                        _player.Bounce();
                     }
                     else
                     {
-                        // DOOD!
-                        // Dit gebeurt nu ALTIJD bij spikes, of als je tegen een vijand aanloopt
-                        player.Die();
+                        _player.Die();
                     }
                 }
             }
-            if (player.Bounds.Intersects(CurrentLevel.ExitZone))
+
+            if (_player.Bounds.Intersects(_currentLevel.ExitZone))
             {
-                CurrentLevelIndex++;
-                LoadLevel(CurrentLevelIndex);
+                _currentLevelIndex++;
+                LoadLevel(_currentLevelIndex);
             }
         }
+
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-            int screenWidth = game.GraphicsDevice.Viewport.Width;
-            int screenHeight = game.GraphicsDevice.Viewport.Height;
-
-            for (int x = 0; x < screenWidth; x += 64)
-            {
-                for (int y = 0; y < screenHeight; y += 64)
-                {
-                    spriteBatch.Draw(backgroundTexture, new Vector2(x, y), Color.White);
-                }
-            }
+            for (int x = 0; x < game.GraphicsDevice.Viewport.Width; x += 64)
+                for (int y = 0; y < game.GraphicsDevice.Viewport.Height; y += 64)
+                    spriteBatch.Draw(_backgroundTexture, new Vector2(x, y), Color.White);
             spriteBatch.End();
 
-            spriteBatch.Begin(transformMatrix: camera.Transform, samplerState: SamplerState.PointClamp);
-            //blokken
-            if (CurrentLevel != null)
+            spriteBatch.Begin(transformMatrix: _camera.Transform, samplerState: SamplerState.PointClamp);
+
+            if (_currentLevel != null)
             {
-                TileManager.DrawTiles(spriteBatch, CurrentLevel.Tiles);
-                // ... rest van je draw code
+                _tileManager.DrawTiles(spriteBatch, _currentLevel.Tiles);
+
+                Rectangle exitRect = _currentLevel.ExitZone;
+                spriteBatch.Draw(_endTexture, new Vector2(exitRect.X - 16, exitRect.Y - 32), new Rectangle(0, 0, 64, 64), Color.White);
+
+                foreach (var enemy in _currentLevel.Enemies) enemy.Draw(spriteBatch);
+                _player.Draw(spriteBatch);
             }
-
-            Rectangle exitRect = CurrentLevel.ExitZone;
-            Vector2 trophyPos = new Vector2(exitRect.X - 16, exitRect.Y - 32);
-
-            spriteBatch.Draw(_endTexture, trophyPos, new Rectangle(0, 0, 64, 64), Color.White);
-            foreach (var enemy in CurrentLevel.Enemies)
-            {
-                enemy.Draw(spriteBatch);
-            }
-            
-            // De player tekenen
-            player.Draw(spriteBatch);
-
             spriteBatch.End();
         }
 
         public void OnNotify(string eventName)
         {
-            if(eventName == "PlayerDied")
-            {
-                game.ChangeState(new GameOverState(game, content, CurrentLevelIndex));
-            }
+            if (eventName == "PlayerDied")
+                game.ChangeState(new GameOverState(game, content, _currentLevelIndex));
         }
     }
 }

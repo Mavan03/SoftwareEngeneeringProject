@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 using TrustIssues.Controls;
 
@@ -12,67 +11,34 @@ namespace TrustIssues.States
         private List<Button> _components;
         private Texture2D _background;
 
-        public VictoryState(Game1 game, ContentManager content) : base(game, content)
-        {
-        }
+        public VictoryState(Game1 game, ContentManager content) : base(game, content) { }
 
         public override void LoadContent()
         {
-            // Laad een feestelijke achtergrond (bijv. Green of Yellow)
             _background = content.Load<Texture2D>("Menu/Yellow");
             var font = content.Load<SpriteFont>("Menu/Font");
+            int centerX = (game.GraphicsDevice.Viewport.Width / 2) - 50;
 
-            // We gebruiken de "Close" knop om naar het menu te gaan
-            // Of als je een "Home" plaatje hebt, gebruik die.
-            var menuTexture = content.Load<Texture2D>("Menu/Close");
+            var menuBtn = new Button(content.Load<Texture2D>("Menu/Close"), font, "", new Vector2(centerX, 250), 3f);
+            menuBtn.Click += (s, e) => game.ChangeState(new MenuState(game, content));
 
-            int screenW = game.GraphicsDevice.Viewport.Width;
-            int screenH = game.GraphicsDevice.Viewport.Height;
-
-            // Knop centreren
-            int btnWidth = (int)(menuTexture.Width * 3f);
-            int centerX = (screenW / 2) - (btnWidth / 2);
-
-            var menuButton = new Button(menuTexture, font, "", new Vector2(centerX, 250), 3f);
-            menuButton.Click += MenuButton_Click;
-
-            _components = new List<Button>() { menuButton };
-        }
-
-        private void MenuButton_Click(object sender, EventArgs e)
-        {
-            game.ChangeState(new MenuState(game, content));
+            _components = new List<Button>() { menuBtn };
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Draw(_background, new Rectangle(0, 0, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height), Color.White);
 
-            // Achtergrond
-            int w = game.GraphicsDevice.Viewport.Width;
-            int h = game.GraphicsDevice.Viewport.Height;
-            spriteBatch.Draw(_background, new Rectangle(0, 0, w, h), Color.White);
-
-            // Tekst: "VICTORY!" of "YOU WIN!"
-            // We laden het font hier even lokaal om te tekenen (of maak het een variabele)
-            var font = content.Load<SpriteFont>("Menu/Font");
             string text = "YOU WIN!";
+            var font = content.Load<SpriteFont>("Menu/Font");
             Vector2 size = font.MeasureString(text);
+            spriteBatch.DrawString(font, text, new Vector2((game.GraphicsDevice.Viewport.Width / 2) - (size.X / 2), 150), Color.Gold);
 
-            // Tekst centreren boven de knop
-            Vector2 textPos = new Vector2((w / 2) - (size.X / 2), 150);
-            spriteBatch.DrawString(font, text, textPos, Color.Gold);
-
-            foreach (var component in _components)
-                component.Draw(spriteBatch);
-
+            foreach (var c in _components) c.Draw(spriteBatch);
             spriteBatch.End();
         }
 
-        public override void Update(GameTime gameTime)
-        {
-            foreach (var component in _components)
-                component.Update(gameTime);
-        }
+        public override void Update(GameTime gameTime) { foreach (var c in _components) c.Update(gameTime); }
     }
 }

@@ -7,17 +7,12 @@ namespace TrustIssues.Entities
 {
     public class WalkerEnemy : Enemy
     {
-        private float speed = 2f;
-        private int direction = 1;
+        private float _speed = 2f;
+        private int _direction = 1;
+        private float _velocityY = 0f;      
+        private float _gravity = 0.5f;     
 
-        private float velocityY = 0f;
-        private float gravity = 0.5f;
-
-        private int height = 32;
-
-        //animatie
         private AnimationManager _animManager;
-        private SpriteEffects _spriteEffect;
         private Animation _hitAnimation;
 
         public WalkerEnemy(Texture2D texture, Texture2D hitTexture, Vector2 startPosition)
@@ -25,6 +20,7 @@ namespace TrustIssues.Entities
             Position = startPosition;
             var runAnim = new Animation(texture, 16, 32, 0.05f);
             _hitAnimation = new Animation(hitTexture, 5, 32, 0.1f);
+
             _animManager = new AnimationManager();
             _animManager.Play(runAnim);
         }
@@ -34,101 +30,72 @@ namespace TrustIssues.Entities
             if (IsDead)
             {
                 _animManager.Update(gameTime);
-
-                // Als de hit-animatie 1x is afgespeeld, mag de vijand weg
-                // (We checken of de huidige frame de laatste is)
-                // Dit vereist wel dat je Animation class weet wanneer hij klaar is,
-                // anders kun je ook simpelweg een timer gebruiken.
-                // Simpele timer hack:
-                if (_animManager.CurrentFrame >= _hitAnimation.FrameCount - 1)
-                {
-                    IsExpired = true;
-                }
-                return; // Stop hier, beweeg niet meer!
+                if (_animManager.CurrentFrame >= _hitAnimation.FrameCount - 1) IsExpired = true;
+                return;
             }
-            // Zwaartekracht
-            velocityY += gravity;
-            Position.Y += velocityY;
 
+            // ZWAARTEKRACHT
+            _velocityY += _gravity;
+            Position.Y += _velocityY;
+
+            Rectangle bounds = Bounds;
             bool isGrounded = false;
-            Rectangle myRect = Bounds; 
 
             foreach (var tile in tiles)
             {
-                if (tile.IsSolid && myRect.Intersects(tile.Bounds))
+                if (tile.IsSolid && bounds.Intersects(tile.Bounds))
                 {
                     // Als we vallen en de bovenkant raken
-                    if (velocityY > 0 && Position.Y < tile.Bounds.Top)
+                    if (_velocityY > 0 && Position.Y < tile.Bounds.Top)
                     {
-                        Position.Y = tile.Bounds.Top - height;
-
-                        Position.Y = (int)Position.Y;
-
-                        velocityY = 0;
+                        Position.Y = tile.Bounds.Top - 32; 
+                        _velocityY = 0;
                         isGrounded = true;
                     }
                 }
             }
 
-            // 2. Slimme AI (Sensor)
-            if (isGrounded)
-            {
-                float lookAheadX = Position.X + 16 + (16 * direction);
-                float lookDownY = Position.Y + 40; 
-
-                Vector2 sensorSpot = new Vector2(lookAheadX, lookDownY);
-                bool groundDetected = false;
-
-                foreach (var tile in tiles)
-                {
-                    if (tile.IsSolid && tile.Bounds.Contains(sensorSpot))
-                    {
-                        groundDetected = true;
-                        break;
-                    }
-                }
-
-                if (!groundDetected)
-                {
-                    direction *= -1;
-                }
-            }
-
-            Position.X += speed * direction;
-
-            myRect = Bounds;
+            // BEWEGEN 
+            Position.X += _speed * _direction;
+            bounds = Bounds; 
 
             foreach (var tile in tiles)
             {
-                if (tile.IsSolid && myRect.Intersects(tile.Bounds))
+                if (tile.IsSolid && bounds.Intersects(tile.Bounds))
                 {
-                    if (myRect.Bottom > tile.Bounds.Top + 5)
-                    {
-                        direction *= -1;
-                        Position.X += speed * direction;
-                    }
+                    _direction *= -1; 
+                    Position.X += _speed * _direction; 
+                    break;
                 }
             }
-            // Update de animatie timer
-            _animManager.Update(gameTime);
 
-            // Spiegel de sprite op basis van richting
-            if (direction > 0) _spriteEffect = SpriteEffects.FlipHorizontally; 
-            else _spriteEffect = SpriteEffects.None;
+            if (isGrounded)
+            {
+                Vector2 lookAhead = new Vector2(Position.X + 16 + (16 * _direction), Position.Y + 40);
+                bool groundAhead = false;
+                foreach (var tile in tiles)
+                {
+                    if (tile.IsSolid && tile.Bounds.Contains(lookAhead))
+                    {
+                        groundAhead = true;
+                        break;
+                    }
+                }
+                if (!groundAhead) _direction *= -1; 
+            }
+
+            _animManager.Update(gameTime);
         }
+
         public override void Draw(SpriteBatch spriteBatch)
         {
-            _animManager.Draw(spriteBatch, Position, _spriteEffect);
+            SpriteEffects effect = _direction > 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+            _animManager.Draw(spriteBatch, Position, effect);
         }
 
         public override void Die()
         {
-            if (!IsDead)
-            {
-                IsDead = true;
-                _animManager.Play(_hitAnimation); // Speel 'poef' animatie
-            }
+            if (!IsDead) { IsDead = true; _animManager.Play(_hitAnimation); }
         }
     }
-    
 }

@@ -7,11 +7,8 @@ using TrustIssues.Entities;
 
 namespace TrustIssues.Input
 {
-    internal class JumpCommand : ICommand
+    public class JumpCommand : ICommand
     {
-        public void Execute(Player player)
-        {
-            player.Jump();
-        }
+        public void Execute(Player player) => player.Jump();
     }
 }

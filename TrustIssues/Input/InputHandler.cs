@@ -1,40 +1,35 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using TrustIssues.Input;
 using TrustIssues.Entities;
 
 namespace TrustIssues.Input
 {
     public class InputHandler
     {
-        private ICommand moveLeft;
-        private ICommand moveRight;
-        private ICommand jump;
-
+        private ICommand _moveLeft, _moveRight, _jump;
 
         public InputHandler()
         {
-            moveLeft = new MoveCommand(new Vector2(-1, 0));
-            moveRight = new MoveCommand(new Vector2(1, 0));
-            jump = new JumpCommand();
+            _moveLeft = new MoveCommand(new Vector2(-1, 0));
+            _moveRight = new MoveCommand(new Vector2(1, 0));
+            _jump = new JumpCommand();
         }
+
         public void Update(Player player)
         {
             var state = Keyboard.GetState();
 
-            if(state.IsKeyDown(Keys.A)|| state.IsKeyDown(Keys.Left) || state.IsKeyDown(Keys.Q))
-            {
-                moveLeft.Execute(player);
-            }
+            // Links 
+            if (state.IsKeyDown(Keys.A) || state.IsKeyDown(Keys.Left) || state.IsKeyDown(Keys.Q))
+                _moveLeft.Execute(player);
+
+            // Rechts
             if (state.IsKeyDown(Keys.D) || state.IsKeyDown(Keys.Right))
-            {
-                moveRight.Execute(player);
-            }
+                _moveRight.Execute(player);
+
+            // Springen 
             if (state.IsKeyDown(Keys.Space) || state.IsKeyDown(Keys.Up) || state.IsKeyDown(Keys.W) || state.IsKeyDown(Keys.Z))
-            {
-                jump.Execute(player);
-            }
+                _jump.Execute(player);
         }
     }
 }

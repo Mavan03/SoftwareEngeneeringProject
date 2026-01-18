@@ -5,44 +5,31 @@ using TrustIssues.Entities;
 
 namespace TrustIssues.Factories
 {
-    public enum EnemyType
-    {
-        Walker,
-        Chaser,
-        Trap
-    }
+    public enum EnemyType { Walker, Chaser, Trap }
+
     public class EnemyFactory
     {
-        private ContentManager content;
-        private Texture2D walkerTexture;
-        private Texture2D walkerHit;
-        private Texture2D chaserTexture;
-        private Texture2D chaserHit;
-
-        private Texture2D trapTexture;
-
+        private Texture2D _walkerTex, _walkerHit;
+        private Texture2D _chaserTex, _chaserHit;
+        private Texture2D _trapTex;
 
         public EnemyFactory(ContentManager content, GraphicsDevice graphicsDevice)
         {
-            walkerTexture = content.Load<Texture2D>("Enemy/Run (32x32)");
-            chaserTexture = content.Load<Texture2D>("Flying (46x30)");
-            trapTexture = content.Load<Texture2D>("Idle");
-            chaserHit = content.Load<Texture2D>("Enemy/Hit (46x30)");
-            walkerHit = content.Load<Texture2D>("Enemy/Hit");
+            _walkerTex = content.Load<Texture2D>("Enemy/Run (32x32)");
+            _walkerHit = content.Load<Texture2D>("Enemy/Hit");
+            _chaserTex = content.Load<Texture2D>("Flying (46x30)"); 
+            _chaserHit = content.Load<Texture2D>("Enemy/Hit (46x30)");
+            _trapTex = content.Load<Texture2D>("Idle"); 
         }
 
         public Enemy CreateEnemy(EnemyType type, Vector2 position)
         {
             switch (type)
             {
-                case EnemyType.Walker:
-                    return new WalkerEnemy(walkerTexture, walkerHit, position);
-                case EnemyType.Chaser:
-                    return new ChaserEnemy(chaserTexture, chaserHit, position);
-                case EnemyType.Trap:
-                    return new TrapEnemy(trapTexture, position);
-                default:
-                    return null;
+                case EnemyType.Walker: return new WalkerEnemy(_walkerTex, _walkerHit, position);
+                case EnemyType.Chaser: return new ChaserEnemy(_chaserTex, _chaserHit, position);
+                case EnemyType.Trap: return new TrapEnemy(_trapTex, position);
+                default: return null;
             }
         }
     }

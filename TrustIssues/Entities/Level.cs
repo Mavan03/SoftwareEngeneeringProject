@@ -7,7 +7,7 @@ namespace TrustIssues.Entities
     {
         public List<Tile> Tiles { get; set; } = new List<Tile>();
         public List<Enemy> Enemies { get; set; } = new List<Enemy>();
-        public Vector2 PlayerStart { get; set; } = new Vector2(100,100);
+        public Vector2 PlayerStart { get; set; }
         public Rectangle ExitZone { get; set; }
     }
 }

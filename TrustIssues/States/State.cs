@@ -15,7 +15,6 @@ namespace TrustIssues.States
             this.content = content;
         }
 
-        //elsk scherm moet dit kunnen
         public abstract void LoadContent();
         public abstract void Update(GameTime gameTime);
         public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
