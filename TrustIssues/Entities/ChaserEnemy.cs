@@ -7,26 +7,39 @@ namespace TrustIssues.Entities
 {
     public class ChaserEnemy : Enemy
     {
-        private float speed = 1f;
-
+        private float speed = 1.5f;
         private AnimationManager _animManager;
+        private Animation _flyAnimation;
+        private Animation _hitAnimation;
         private SpriteEffects _spriteEffect;
 
-        public ChaserEnemy(Texture2D texture, Vector2 startPosition)
+        public ChaserEnemy(Texture2D flyTexture, Texture2D hitTexture, Vector2 startPosition)
         {
             Position = startPosition;
 
             // Bat Flying heeft 7 frames en is 46 pixels breed
-            var flyAnim = new Animation(texture, 7, 46, 0.1f);
+            _flyAnimation = new Animation(flyTexture, 7, 46, 0.1f, true);
+            _hitAnimation = new Animation(hitTexture, 5, 32, 0.1f);
 
             _animManager = new AnimationManager();
-            _animManager.Play(flyAnim);
+            _animManager.Play(_flyAnimation);
         }
        
 
         public override void Update(GameTime gameTime, Player player, List<Tile> tiles)
         {
+            if (IsDead)
+            {
+                _animManager.Update(gameTime);
 
+                // Check of de animatie klaar is met de nieuwe property
+                // We kijken of de huidige frame gelijk is aan het laatste frame (FrameCount - 1)
+                if (_animManager.CurrentFrame >= _hitAnimation.FrameCount - 1)
+                {
+                    IsExpired = true; // Verwijder uit game
+                }
+                return; // Stop bewegen
+            }
             Vector2 direction = player.Position - Position;
             if (direction.X > 0) _spriteEffect = SpriteEffects.FlipHorizontally;
             else _spriteEffect = SpriteEffects.None;
@@ -68,6 +81,15 @@ namespace TrustIssues.Entities
         {
             Vector2 drawPos = new Vector2(Position.X - 7, Position.Y);
             _animManager.Draw(spriteBatch, drawPos, _spriteEffect);
+        }
+
+        public override void Die()
+        {
+            if (!IsDead)
+            {
+                IsDead = true;
+                _animManager.Play(_hitAnimation); // Speel 'poef' animatie
+            }
         }
 
         public new Rectangle Bounds

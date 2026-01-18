@@ -128,13 +128,42 @@ namespace TrustIssues.States
             player.Update(gameTime, CurrentLevel.Tiles);
             camera.Follow(player.Position);
 
-            foreach (var enemy in CurrentLevel.Enemies)
+            for (int i = CurrentLevel.Enemies.Count - 1; i >= 0; i--)
             {
+                Enemy enemy = CurrentLevel.Enemies[i];
+
+                // 1. Eerst updaten
                 enemy.Update(gameTime, player, CurrentLevel.Tiles);
 
-                if (enemy.Bounds.Intersects(player.Bounds))
+                // 2. Als hij 'Expired' is (animatie klaar), verwijder hem definitief
+                if (enemy.IsExpired)
                 {
-                    player.Die();
+                    CurrentLevel.Enemies.RemoveAt(i);
+                    continue;
+                }
+
+                // 3. Botsing checken (Alleen als vijand nog leeft en speler leeft)
+                if (!enemy.IsDead && player.Bounds.Intersects(enemy.Bounds))
+                {
+                    // LOGICA: SPRONG OP HOOFD?
+                    // Voorwaarden:
+                    // A. Speler valt naar beneden (Velocity.Y > 0)
+                    // B. Speler zit fysiek boven de vijand (Bottom < Center van vijand)
+
+                    Rectangle enemyRect = enemy.Bounds;
+
+                    if (player.Velocity.Y > 0 && player.Bounds.Bottom < enemyRect.Center.Y && enemy.IsStompable) // <--- HIER IS DE FIX
+                    {
+                        // PLET DE VIJAND
+                        enemy.Die();
+                        player.Bounce();
+                    }
+                    else
+                    {
+                        // DOOD!
+                        // Dit gebeurt nu ALTIJD bij spikes, of als je tegen een vijand aanloopt
+                        player.Die();
+                    }
                 }
             }
             if (player.Bounds.Intersects(CurrentLevel.ExitZone))

@@ -10,6 +10,7 @@ namespace TrustIssues.Entities
         {
             this.texture = texture;
             Position = startPosition;
+            IsStompable = false;
         }
         public override void Update(GameTime gameTime, Player player, List<Tile> tiles)
         {
@@ -21,12 +22,14 @@ namespace TrustIssues.Entities
                 spriteBatch.Draw(texture, Position, null, Color.White, 0f, Vector2.Zero, 2.0f, SpriteEffects.None, 0f);
             }
         }
+
+        public override void Die()
+        {
+        }
+
         public new Rectangle Bounds
         {
-            get
-            {
-                return new Rectangle((int)Position.X + 4, (int)Position.Y + 16, 24, 16);
-            }
+            get { return new Rectangle((int)Position.X + 4, (int)Position.Y + 16, 24, 16); }
         }
     }
 }

@@ -6,22 +6,18 @@ namespace TrustIssues.Entities
 {
     public abstract class Enemy
     {
-        public Vector2 Position;
-        protected Texture2D texture;
 
+        public Vector2 Position;
+        public Rectangle Bounds => new Rectangle((int)Position.X, (int)Position.Y, 32, 32);
+        protected Texture2D texture;
+        public bool IsDead { get; protected set; } = false;
+        public bool IsExpired { get; protected set; } = false;
+
+        public bool IsStompable { get; protected set; } = true;
         public abstract void Update(GameTime gameTime, Player player, List<Tile> tiles);
 
-        public virtual void Draw(SpriteBatch spriteBatch)
-        {
-            if (texture != null)
-                spriteBatch.Draw(texture, Position, Color.White);
-        }
-        public Rectangle Bounds
-        {
-            get
-            {
-                return new Rectangle((int)Position.X, (int)Position.Y, 32, 32);
-            }
-        }
+        public abstract void Draw(SpriteBatch spriteBatch);
+        public abstract void Die();
+
     }
 }

@@ -18,17 +18,34 @@ namespace TrustIssues.Entities
         //animatie
         private AnimationManager _animManager;
         private SpriteEffects _spriteEffect;
+        private Animation _hitAnimation;
 
-        public WalkerEnemy(Texture2D texture, Vector2 startPosition)
+        public WalkerEnemy(Texture2D texture, Texture2D hitTexture, Vector2 startPosition)
         {
             Position = startPosition;
             var runAnim = new Animation(texture, 16, 32, 0.05f);
+            _hitAnimation = new Animation(hitTexture, 5, 32, 0.1f);
             _animManager = new AnimationManager();
             _animManager.Play(runAnim);
         }
 
         public override void Update(GameTime gameTime, Player player, List<Tile> tiles)
         {
+            if (IsDead)
+            {
+                _animManager.Update(gameTime);
+
+                // Als de hit-animatie 1x is afgespeeld, mag de vijand weg
+                // (We checken of de huidige frame de laatste is)
+                // Dit vereist wel dat je Animation class weet wanneer hij klaar is,
+                // anders kun je ook simpelweg een timer gebruiken.
+                // Simpele timer hack:
+                if (_animManager.CurrentFrame >= _hitAnimation.FrameCount - 1)
+                {
+                    IsExpired = true;
+                }
+                return; // Stop hier, beweeg niet meer!
+            }
             // Zwaartekracht
             velocityY += gravity;
             Position.Y += velocityY;
@@ -102,6 +119,15 @@ namespace TrustIssues.Entities
         public override void Draw(SpriteBatch spriteBatch)
         {
             _animManager.Draw(spriteBatch, Position, _spriteEffect);
+        }
+
+        public override void Die()
+        {
+            if (!IsDead)
+            {
+                IsDead = true;
+                _animManager.Play(_hitAnimation); // Speel 'poef' animatie
+            }
         }
     }
     

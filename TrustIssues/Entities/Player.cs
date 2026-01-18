@@ -25,6 +25,7 @@ namespace TrustIssues.Entities
         private const float MaxFallSpeed = 10f;
         private const float MoveSpeed = 5f;
         private bool _isGrounded = false;
+        public Vector2 Velocity => velocity;
 
         // Hitbox
         private int width = 20;
@@ -200,7 +201,12 @@ namespace TrustIssues.Entities
                 observer.OnNotify(eventName);
             }
         }
-
+        public void Bounce()
+        {
+            // Lanceer de speler weer omhoog
+            velocity.Y = -8f; // Iets minder hard dan een normale sprong (-12f)
+            _isGrounded = false;
+        }
         public void Die()
         {
             NotifyObeservers("PlayerDied");
