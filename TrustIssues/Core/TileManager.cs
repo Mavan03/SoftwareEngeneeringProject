@@ -5,6 +5,7 @@ using TrustIssues.Entities;
 
 namespace TrustIssues.Core
 {
+    // tekenene van de tiles = srp
     public class TileManager
     {
         private Texture2D _tilesetTexture;

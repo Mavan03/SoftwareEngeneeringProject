@@ -22,6 +22,7 @@ namespace TrustIssues.Core
 
         public void Update(GameTime gameTime)
         {
+            //timer  voor current frame
             if (_animation == null) return;
             _timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -42,6 +43,7 @@ namespace TrustIssues.Core
 
         public void Draw(SpriteBatch spriteBatch, Vector2 position, SpriteEffects effects)
         {
+            // welk stuktje dat getekent moet worden
             if (_animation == null) return;
             spriteBatch.Draw(_animation.Texture, position, CurrentFrameRect, Color.White, 0f, Vector2.Zero, 1f, effects, 0f);
         }

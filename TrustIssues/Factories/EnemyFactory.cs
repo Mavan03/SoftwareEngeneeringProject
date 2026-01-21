@@ -15,6 +15,7 @@ namespace TrustIssues.Factories
 
         public EnemyFactory(ContentManager content, GraphicsDevice graphicsDevice)
         {
+            // texture voor enemy dpi
             _walkerTex = content.Load<Texture2D>("Enemy/Run (32x32)");
             _walkerHit = content.Load<Texture2D>("Enemy/Hit");
             _chaserTex = content.Load<Texture2D>("Flying (46x30)"); 
@@ -24,6 +25,8 @@ namespace TrustIssues.Factories
 
         public Enemy CreateEnemy(EnemyType type, Vector2 position)
         {
+
+            // eneny maken textures en pos megeven dpi
             switch (type)
             {
                 case EnemyType.Walker: return new WalkerEnemy(_walkerTex, _walkerHit, position);

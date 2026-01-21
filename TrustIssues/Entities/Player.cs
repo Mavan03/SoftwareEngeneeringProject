@@ -8,6 +8,8 @@ namespace TrustIssues.Entities
 {
     public class Player
     {
+
+        // pos player
         public Vector2 Position;
         public Vector2 Velocity => velocity;
 
@@ -32,6 +34,7 @@ namespace TrustIssues.Entities
 
         // Observer Pattern
         private List<IGameObserver> Observers = new List<IGameObserver>();
+
 
         public Rectangle Bounds => new Rectangle((int)Position.X + offsetX, (int)Position.Y + offsetY, width, height);
 
@@ -59,12 +62,14 @@ namespace TrustIssues.Entities
 
         private void ApplyGravity()
         {
+            //sneller vanllen
             velocity.Y += Gravity;
             if (velocity.Y > MaxFallSpeed) velocity.Y = MaxFallSpeed;
         }
 
         private void MoveX(List<Tile> tiles)
         {
+            //checken voor collison tegen muur anders vel 0 en wegduwen
             Position.X += velocity.X;
             Rectangle playerRect = Bounds;
             foreach (var tile in tiles)
@@ -81,6 +86,7 @@ namespace TrustIssues.Entities
 
         private void MoveY(List<Tile> tiles)
         {
+            //chekc of player op grond is mat hitbox en of groudend ofniet
             Position.Y += velocity.Y;
             Rectangle playerRect = Bounds;
             _isGrounded = false;
@@ -122,6 +128,7 @@ namespace TrustIssues.Entities
 
         public void Move(Vector2 direction)
         {
+
             if (direction.X != 0) velocity.X = direction.X > 0 ? MoveSpeed : -MoveSpeed;
         }
 
@@ -138,12 +145,16 @@ namespace TrustIssues.Entities
 
         public void Die()
         {
+            //notify
             NotifyObeservers("PlayerDied");
         }
 
+        // ObserverPAtteren
         public void AddObserver(IGameObserver observer) => Observers.Add(observer);
+        //gamestate notify
         private void NotifyObeservers(string eventName) { foreach (var obs in Observers) obs.OnNotify(eventName); }
 
+        //tekenen player, animMang opvragen voor frame teken op pos
         public void Draw(SpriteBatch spriteBatch)
         {
             animManager.Draw(spriteBatch, new Vector2((int)Position.X, (int)Position.Y), spriteEffect);

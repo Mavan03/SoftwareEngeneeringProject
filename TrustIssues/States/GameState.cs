@@ -33,6 +33,7 @@ namespace TrustIssues.States
 
         public override void LoadContent()
         {
+            //centrale content game tex laden
             _camera = new Camera();
             _inputHandler = new InputHandler();
             _enemyFactory = new EnemyFactory(content, game.GraphicsDevice);
@@ -163,6 +164,7 @@ namespace TrustIssues.States
             spriteBatch.End();
         }
 
+        // observer 
         public void OnNotify(string eventName)
         {
             if (eventName == "PlayerDied")

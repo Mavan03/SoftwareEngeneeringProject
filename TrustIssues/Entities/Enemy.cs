@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace TrustIssues.Entities
 {
+    //OPC
     public abstract class Enemy
     {
         public Vector2 Position;

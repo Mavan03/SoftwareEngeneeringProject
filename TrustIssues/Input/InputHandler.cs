@@ -4,6 +4,9 @@ using TrustIssues.Entities;
 
 namespace TrustIssues.Input
 {
+    // luisteren naar input = srp
+    // Luisteren naar ICommand = Dependency inversion
+
     public class InputHandler
     {
         private ICommand _moveLeft, _moveRight, _jump;
